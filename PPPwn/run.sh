@@ -1,5 +1,7 @@
 #!/bin/bash
 
+LOG_COMMAND="sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/pwn.log"
+
 if [ -f /boot/firmware/PPPwn/config.sh ]; then
 source /boot/firmware/PPPwn/config.sh
 fi
@@ -144,7 +146,7 @@ echo -e "\n\n\033[36m _____  _____  _____
 |  ___/|  ___/|  ___/\\ \\ /\\ / / '_ \\  |_   _|_   _|
 | |    | |    | |     \\ V  V /| | | |   |_|   |_|  
 |_|    |_|    |_|      \\_/\\_/ |_| |_|\033[0m
-\n\033[33mhttps://github.com/TheOfficialFloW/PPPwn\nhttps://github.com/xfangfang/PPPwn_cpp\033[0m\n" | sudo tee /dev/tty1
+\n\033[33mhttps://github.com/TheOfficialFloW/PPPwn\nhttps://github.com/xfangfang/PPPwn_cpp\033[0m\n" | $LOG_COMMAND
 sudo systemctl stop pppoe
 sudo systemctl stop dtlink
 if [ $USBETHERNET = true ] ; then
@@ -180,12 +182,12 @@ if [ $VMUSB = true ] ; then
   if [[ ! -z $UDEV ]] ;then
     sudo modprobe g_mass_storage file=$UDEV stall=0 ro=0 removable=1
   fi
-  echo -e "\033[92mUSB Drive:\033[93m Enabled\033[0m" | sudo tee /dev/tty1
+  echo -e "\033[92mUSB Drive:\033[93m Enabled\033[0m" | $LOG_COMMAND
 fi
 if [ $PPPOECONN = true ] ; then
-   echo -e "\033[92mInternet Access:\033[93m Enabled\033[0m" | sudo tee /dev/tty1
+   echo -e "\033[92mInternet Access:\033[93m Enabled\033[0m" | $LOG_COMMAND
 else   
-   echo -e "\033[92mInternet Access:\033[93m Disabled\033[0m" | sudo tee /dev/tty1
+   echo -e "\033[92mInternet Access:\033[93m Disabled\033[0m" | $LOG_COMMAND
 fi
 if [ -f /boot/firmware/PPPwn/pwn.log ]; then
    sudo rm -f /boot/firmware/PPPwn/pwn.log
@@ -194,12 +196,12 @@ if [[ $LEDACT == "status" ]] ;then
    echo timer | sudo tee $PLED >/dev/null
 fi
 if [[ ! $(ifconfig $INTERFACE) == *"RUNNING"* ]]; then
-   echo -e "\033[31mWaiting for link\033[0m" | sudo tee /dev/tty1
+   echo -e "\033[31mWaiting for link\033[0m" | $LOG_COMMAND
    while [[ ! $(ifconfig $INTERFACE) == *"RUNNING"* ]]
    do
       coproc read -t 2 && wait "$!" || true
    done
-   echo -e "\033[32mLink found\033[0m\n" | sudo tee /dev/tty1
+   echo -e "\033[32mLink found\033[0m\n" | $LOG_COMMAND
 fi
 if [ $RESTMODE = true ] && [ $UGH = true ] ; then
 sudo pppoe-server -I $INTERFACE -T 60 -N 1 -C PPPWN -S PPPWN -L 192.168.2.1 -R 192.168.2.2 
@@ -211,7 +213,7 @@ done
 coproc read -t 5 && wait "$!" || true
 GHT=$(sudo nmap -p 3232 192.168.2.2 | grep '3232/tcp' | cut -f2 -d' ')
 if [[ $GHT == *"open"* ]] ; then
-echo -e "\n\033[95mGoldhen found aborting pppwn\033[0m\n" | sudo tee /dev/tty1
+echo -e "\n\033[95mGoldhen found aborting pppwn\033[0m\n" | $LOG_COMMAND
 if [[ $LEDACT == "status" ]] ;then
 	echo none | sudo tee $PLED >/dev/null
 	echo default-on | sudo tee $ALED >/dev/null
@@ -236,7 +238,7 @@ else
 fi
 exit 0
 else
-echo -e "\n\033[95mGoldhen not found starting pppwn\033[0m\n" | sudo tee /dev/tty1
+echo -e "\n\033[95mGoldhen not found starting pppwn\033[0m\n" | $LOG_COMMAND
 sudo killall pppoe-server
 if [ $USBETHERNET = true ] ; then
 	echo '1-1' | sudo tee /sys/bus/usb/drivers/usb/unbind >/dev/null
@@ -253,9 +255,9 @@ fi
 fi
 PIIP=$(hostname -I) || true
 if [ "$PIIP" ]; then
-   echo -e "\n\033[92mIP: \033[93m $PIIP\033[0m" | sudo tee /dev/tty1
+   echo -e "\n\033[92mIP: \033[93m $PIIP\033[0m" | $LOG_COMMAND
 fi
-echo -e "\n\033[95mReady for console connection\033[0m\n" | sudo tee /dev/tty1
+echo -e "\n\033[95mReady for console connection\033[0m\n" | $LOG_COMMAND
 while [ true ]
 do
 if [[ $LEDACT == "status" ]] ;then
@@ -275,7 +277,7 @@ do
 	echo -e $stdo | sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/pwn.log
  fi
  if [[ $stdo  == "[+] Done!" ]] ; then
-	echo -e "\033[32m\nConsole PPPwned! \033[0m\n" | sudo tee /dev/tty1
+	echo -e "\033[32m\nConsole PPPwned! \033[0m\n" | $LOG_COMMAND
 	if [[ $LEDACT == "status" ]] ;then
 		echo none | sudo tee $PLED >/dev/null
 		echo default-on | sudo tee $ALED >/dev/null
@@ -299,9 +301,9 @@ do
 	fi
 	exit 0
  elif [[ $stdo  == *"Scanning for corrupted object...failed"* ]] ; then
- 	echo -e "\033[31m\nFailed retrying...\033[0m\n" | sudo tee /dev/tty1
+ 	echo -e "\033[31m\nFailed retrying...\033[0m\n" | $LOG_COMMAND
  elif [[ $stdo  == *"Unsupported firmware version"* ]] ; then
- 	echo -e "\033[31m\nUnsupported firmware version\033[0m\n" | sudo tee /dev/tty1
+ 	echo -e "\033[31m\nUnsupported firmware version\033[0m\n" | $LOG_COMMAND
 	
 	if [[ $LEDACT == "status" ]] ;then
 	 	echo none | sudo tee $ALED >/dev/null
@@ -309,7 +311,7 @@ do
 	fi
  	exit 1
  elif [[ $stdo  == *"Cannot find interface with name of"* ]] ; then
- 	echo -e "\033[31m\nInterface $INTERFACE not found\033[0m\n" | sudo tee /dev/tty1
+ 	echo -e "\033[31m\nInterface $INTERFACE not found\033[0m\n" | $LOG_COMMAND
 	
 	if [[ $LEDACT == "status" ]] ;then
 	 	echo none | sudo tee $ALED >/dev/null
