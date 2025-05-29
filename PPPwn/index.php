@@ -805,7 +805,8 @@ if (isset($_POST['update'])){
     startLog('upd.log');");
 }
 
-if (!isset($_POST['enabled'])) {
+if (!isset($_POST['enabled']) && $enabled == "false") {
+    exec('echo "PPPwn Enabled: '.$enabled.'"| sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/pwn.log');
     exec('echo "\033[32mStopping PPPwn services...\033[0m" "'.$_POST['enabled'].'" | sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/pwn.log');
     exec('sudo systemctl stop pipwn');
 }
