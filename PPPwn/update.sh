@@ -8,7 +8,7 @@ sudo mkdir /home/www-data
 cd /home/www-data
 sudo rm -f -r PI-Pwn
 echo "Downloading files... " | sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/upd.log
-git clone https://github.com/stooged/PI-Pwn
+git clone --depth 1 https://github.com/hemancini/PI-Pwn
 currentver=$(</boot/firmware/PPPwn/ver)
 newver=$(<PI-Pwn/PPPwn/ver)
 if [ $newver -gt $currentver ]; then
