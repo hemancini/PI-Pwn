@@ -626,7 +626,8 @@ PYPWN='$UPYPWN'
 LEDACT="normal"
 DDNS=false
 OIPV='$IPV'
-UGH='$USEGH'' | sudo tee /boot/firmware/PPPwn/config.sh
+UGH='$USEGH'
+ENABLED=true' | sudo tee /boot/firmware/PPPwn/config.sh
 echo '#!/bin/bash
 XFWAP="1"
 XFGD="4"

@@ -33,6 +33,12 @@ if [ -z $XFCN ]; then XFCN="0x1"; fi
 if [ -z $XFNWB ]; then XFNWB=false; fi
 if [ -z $OIPV ]; then OIPV=false; fi
 if [ -z $UGH ]; then UGH=true; fi
+if [ -z $ENABLED ]; then ENABLED=true; fi
+
+if [ $ENABLED = false ]; then
+    echo -e "\033[31mPPPwn is disabled.\033[0m" | $LOG_COMMAND
+		exit 0
+fi
 if [ $OIPV = true ] ; then
 XFIP="fe80::4141:4141:4141:4141"
 else

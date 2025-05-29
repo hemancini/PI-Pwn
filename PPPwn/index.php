@@ -20,6 +20,7 @@ if (isset($_POST['save'])){
 	$config .= "DDNS=".(isset($_POST["ddns"]) ? "true" : "false")."\n";
 	$config .= "OIPV=".(isset($_POST["oipv"]) ? "true" : "false")."\n";
 	$config .= "UGH=".(isset($_POST["ugh"]) ? "true" : "false")."\n";
+	$config .= "ENABLED=".(isset($_POST["enabled"]) ? "true" : "false")."\n";
 	exec('echo "'.$config.'" | sudo tee /boot/firmware/PPPwn/config.sh');
 	exec('echo "'.trim($_POST["plist"]).'" | sudo tee /boot/firmware/PPPwn/ports.txt');
  	exec('sudo iptables -P INPUT ACCEPT');
@@ -77,7 +78,7 @@ if (isset($_POST['save'])){
 }
  
 if (isset($_POST['restart'])){
-   exec('echo "\033[32mRestarting\033[0m"  | sudo tee /dev/tty1 && sudo systemctl restart pipwn');
+   exec('echo "\033[32mRestarting...\033[0m" | sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/pwn.log && sudo systemctl restart pipwn');
 }
 
 if (isset($_POST['reboot'])){
@@ -157,6 +158,9 @@ foreach ($data as $x) {
    elseif (str_starts_with($x, 'UGH')) {
       $ugh = (explode("=", $x)[1]);
    }
+   elseif (str_starts_with($x, 'ENABLED')) {
+      $enabled = (explode("=", $x)[1]);
+   }
 }
 }else{
    $interface = "eth0";
@@ -174,6 +178,7 @@ foreach ($data as $x) {
    $ddns = "false";
    $oipv = "false";
    $ugh = "true";
+   $enabled = "true";
 }
 
 
@@ -191,6 +196,7 @@ if (empty($ledact)){ $ledact = "normal";}
 if (empty($ddns)){ $ddns = "false";}
 if (empty($oipv)){ $oipv = "false";}
 if (empty($ugh)){ $ugh = "true";}
+if (empty($enabled)){ $enabled = "true";}
 
 
 $cmd = 'sudo cat /boot/firmware/PPPwn/ports.txt';
@@ -602,6 +608,11 @@ print("<br>");
 print("<a href=\"pconfig.php\" style=\"text-decoration:none;\"><label id=\"pconfig\">PPPwn C++ Options</label></a><br>");
 }
 
+$cval = $enabled == "true" ? "checked" : "";
+print("<br><input type=\"checkbox\" name=\"enabled\" value=\"".$enabled."\" ".$cval.">
+<label for=\"enabled\">&nbsp;PPPwn Enabled</label>
+<br>");
+
 
 $cval = "";
 if ($ugh == "true")
@@ -792,6 +803,11 @@ if (isset($_POST['update'])){
     var lbody = document.getElementsByClassName(\"logger-body\")[0];
     lbody.innerHTML  = '<textarea disabled id=\"text_box\" rows=\"40\"></textarea>';
     startLog('upd.log');");
+}
+
+if (!isset($_POST['enabled'])) {
+    exec('echo "\033[32mStopping PPPwn services...\033[0m" "'.$_POST['enabled'].'" | sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/pwn.log');
+    exec('sudo systemctl stop pipwn');
 }
 
 print("</script>
