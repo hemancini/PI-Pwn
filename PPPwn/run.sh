@@ -34,11 +34,6 @@ if [ -z $XFNWB ]; then XFNWB=false; fi
 if [ -z $OIPV ]; then OIPV=false; fi
 if [ -z $UGH ]; then UGH=true; fi
 if [ -z $ENABLED ]; then ENABLED=true; fi
-
-if [ $ENABLED = false ]; then
-    echo -e "\033[31mPPPwn is disabled.\033[0m" | $LOG_COMMAND
-		exit 0
-fi
 if [ $OIPV = true ] ; then
 XFIP="fe80::4141:4141:4141:4141"
 else
@@ -201,13 +196,15 @@ fi
 if [[ $LEDACT == "status" ]] ;then
    echo timer | sudo tee $PLED >/dev/null
 fi
+if [ $ENABLED = true ]; then
 if [[ ! $(ifconfig $INTERFACE) == *"RUNNING"* ]]; then
-   echo -e "\033[31mWaiting for link\033[0m" | $LOG_COMMAND
-   while [[ ! $(ifconfig $INTERFACE) == *"RUNNING"* ]]
-   do
-      coproc read -t 2 && wait "$!" || true
-   done
-   echo -e "\033[32mLink found\033[0m\n" | $LOG_COMMAND
+	echo -e "\033[31mWaiting for link\033[0m" | $LOG_COMMAND
+	while [[ ! $(ifconfig $INTERFACE) == *"RUNNING"* ]]
+	do
+			coproc read -t 2 && wait "$!" || true
+	done
+	echo -e "\033[32mLink found\033[0m\n" | $LOG_COMMAND
+fi
 fi
 if [ $RESTMODE = true ] && [ $UGH = true ] ; then
 sudo pppoe-server -I $INTERFACE -T 60 -N 1 -C PPPWN -S PPPWN -L 192.168.2.1 -R 192.168.2.2 
@@ -277,55 +274,59 @@ if [ -f /boot/firmware/PPPwn/config.sh ]; then
    PPDBG=false
  fi
 fi
-while read -r stdo ; 
-do 
- if [ $PPDBG = true ] ; then
-	echo -e $stdo | sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/pwn.log
- fi
- if [[ $stdo  == "[+] Done!" ]] ; then
-	echo -e "\033[32m\nConsole PPPwned! \033[0m\n" | $LOG_COMMAND
-	if [[ $LEDACT == "status" ]] ;then
-		echo none | sudo tee $PLED >/dev/null
-		echo default-on | sudo tee $ALED >/dev/null
+if [ $ENABLED = true ]; then
+	while read -r stdo ; 
+	do 
+	if [ $PPDBG = true ] ; then
+		echo -e $stdo | sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/pwn.log
 	fi
-	if [ $PPPOECONN = true ] ; then
-		sudo systemctl start pppoe
-		if [ $DTLINK = true ] ; then
-			sudo systemctl start dtlink
+	if [[ $stdo  == "[+] Done!" ]] ; then
+		echo -e "\033[32m\nConsole PPPwned! \033[0m\n" | $LOG_COMMAND
+		if [[ $LEDACT == "status" ]] ;then
+			echo none | sudo tee $PLED >/dev/null
+			echo default-on | sudo tee $ALED >/dev/null
 		fi
-	else
-		if [ $SHUTDOWN = true ] ; then
-			coproc read -t 5 && wait "$!" || true
-			sudo poweroff
-		else
+		if [ $PPPOECONN = true ] ; then
+			sudo systemctl start pppoe
 			if [ $DTLINK = true ] ; then
 				sudo systemctl start dtlink
-			else
-				sudo ip link set $INTERFACE down
 			fi
-        fi
+		else
+			if [ $SHUTDOWN = true ] ; then
+				coproc read -t 5 && wait "$!" || true
+				sudo poweroff
+			else
+				if [ $DTLINK = true ] ; then
+					sudo systemctl start dtlink
+				else
+					sudo ip link set $INTERFACE down
+				fi
+					fi
+		fi
+		exit 0
+	elif [[ $stdo  == *"Scanning for corrupted object...failed"* ]] ; then
+		echo -e "\033[31m\nFailed retrying...\033[0m\n" | $LOG_COMMAND
+	elif [[ $stdo  == *"Unsupported firmware version"* ]] ; then
+		echo -e "\033[31m\nUnsupported firmware version\033[0m\n" | $LOG_COMMAND
+		
+		if [[ $LEDACT == "status" ]] ;then
+			echo none | sudo tee $ALED >/dev/null
+			echo default-on | sudo tee $PLED >/dev/null
+		fi
+		exit 1
+	elif [[ $stdo  == *"Cannot find interface with name of"* ]] ; then
+		echo -e "\033[31m\nInterface $INTERFACE not found\033[0m\n" | $LOG_COMMAND
+		
+		if [[ $LEDACT == "status" ]] ;then
+			echo none | sudo tee $ALED >/dev/null
+			echo default-on | sudo tee $PLED >/dev/null
+		fi
+		exit 1
 	fi
-	exit 0
- elif [[ $stdo  == *"Scanning for corrupted object...failed"* ]] ; then
- 	echo -e "\033[31m\nFailed retrying...\033[0m\n" | $LOG_COMMAND
- elif [[ $stdo  == *"Unsupported firmware version"* ]] ; then
- 	echo -e "\033[31m\nUnsupported firmware version\033[0m\n" | $LOG_COMMAND
-	
-	if [[ $LEDACT == "status" ]] ;then
-	 	echo none | sudo tee $ALED >/dev/null
-	 	echo default-on | sudo tee $PLED >/dev/null
-	fi
- 	exit 1
- elif [[ $stdo  == *"Cannot find interface with name of"* ]] ; then
- 	echo -e "\033[31m\nInterface $INTERFACE not found\033[0m\n" | $LOG_COMMAND
-	
-	if [[ $LEDACT == "status" ]] ;then
-	 	echo none | sudo tee $ALED >/dev/null
-	 	echo default-on | sudo tee $PLED >/dev/null
-	fi
- 	exit 1
- fi
-done < <(timeout $TIMEOUT sudo /boot/firmware/PPPwn/$CPPBIN --interface "$INTERFACE" --fw "${FIRMWAREVERSION//.}" -sta "$HDIR$STA2" --ipv "$XFIP" --wait-after-pin $XFWAP --groom-delay $XFGD --buffer-size $XFBS --spray-num $XFSN --pin-num $XFPN --corrupt-num $XFCN $XFNW)
+	done < <(timeout $TIMEOUT sudo /boot/firmware/PPPwn/$CPPBIN --interface "$INTERFACE" --fw "${FIRMWAREVERSION//.}" -sta "$HDIR$STA2" --ipv "$XFIP" --wait-after-pin $XFWAP --groom-delay $XFGD --buffer-size $XFBS --spray-num $XFSN --pin-num $XFPN --corrupt-num $XFCN $XFNW)
+else
+	echo -e "\033[31mPPPwn is disabled.\033[0m" | $LOG_COMMAND
+fi
 if [[ $LEDACT == "status" ]] ;then
  	echo none | sudo tee $ALED >/dev/null
  	echo default-on | sudo tee $PLED >/dev/null

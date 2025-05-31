@@ -220,7 +220,7 @@ print("<html>
 body {
 	user-select: none;
     -webkit-user-select: none;
-    background-color: #0E0E14;
+    background-color: #060606;
     color: white;
     font-family: Arial;
 }
@@ -806,8 +806,7 @@ if (isset($_POST['update'])){
 }
 
 if (!isset($_POST['enabled']) && $enabled == "false") {
-    exec('echo "PPPwn Enabled: '.$enabled.'"| sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/pwn.log');
-    exec('echo "\033[32mStopping PPPwn services...\033[0m" "'.$_POST['enabled'].'" | sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/pwn.log');
+    exec('echo "\033[32mPPPwn Enabled:\033[0m" '.$enabled.'"| sudo tee /dev/tty1 | sudo tee /dev/pts/* | sudo tee -a /boot/firmware/PPPwn/pwn.log');
     exec('sudo systemctl stop pipwn');
 }
 
